@@ -1,3 +1,9 @@
+#include <Adafruit_NeoPixel.h>
+#ifdef __AVR__
+  #include <avr/power.h>
+#endif
+
+#define PIN 8
 /*
    The circuit:
   - LED attached from pin 13 to ground
@@ -8,7 +14,7 @@
     attached to pin 13.
 
   created 2005
-  by DojoDave <http://www.0j0.org>
+  by DojoDave <http://www.0j0.org>  
   modified 30 Aug 2011
   by Tom Igoe
 
@@ -17,34 +23,37 @@
   http://www.arduino.cc/en/Tutorial/Button
 */
 
+Adafruit_NeoPixel strip = Adafruit_NeoPixel(8, PIN, NEO_GRB + NEO_KHZ800);
+
 // constants won't change. They're used here to set pin numbers:
-const int triggerPin = 2;     // the number of the pushbutton pin
+const int triggerPin = 5;     // the number of the pushbutton pin
 //const int ledPin =  13;      // the number of the LED pin
-const int statusPin = 3;
-const int incPin = 1; //analog
-const int decPin = 0; //analog
+const int statusPin = 4;
+const int incPin = 6; //analog
+const int decPin = 7; //analog
 const int RED = 1;
 //const int GREEN = 2;
 const int BLUE = 3;
 
 // variables will change:
-int lidState = 0;
+int lidState = LOW;
 int incState = LOW;
 int decState = LOW;
-int prevLidState = 0;
-int prevStatusState = 0;
+int prevLidState = LOW;
+int prevStatusState = LOW;
 int prevIncState = LOW;
 int prevDecState = LOW;
-int statusState = 0;
+int statusState = LOW;
 //int intervalCigarettes = 5;
 int smoked = 0;
 //unsigned long lastCigarTime = 0;
-int limit = 5;
+int limit = 8;
+
 
 int ledPins[] = {13, 12, 11, 10, 9, 8, 7, 6, 5, 4};
-int leds[] = {BLUE, BLUE, BLUE, BLUE, BLUE};
+int leds[] = {BLUE, BLUE, BLUE, BLUE, BLUE, BLUE, BLUE, BLUE};
 int ledSignals[] = {LOW, LOW, LOW, LOW, LOW, LOW, LOW, LOW, LOW, LOW};
-int LEDS_SIZE = 5;
+int LEDS_SIZE = 8;
 int LEDS_SIGNALS_SIZE = 10;
 int PERCENTAGE_DIVISION = 100 / LEDS_SIZE;
 
@@ -57,9 +66,12 @@ void setup() {
   // initialize the pushbutton pin as an input:
   pinMode(triggerPin, INPUT);
   pinMode(statusPin, INPUT);
-  //pinMode(incPin, INPUT);
-  //pinMode(decPin, INPUT);
+  pinMode(incPin, INPUT);
+  pinMode(decPin, INPUT);
   Serial.begin(9600);
+  strip.begin();
+  strip.show();
+  strip.setBrightness(50);
 }
 
 void resetLeds() {
@@ -67,9 +79,9 @@ void resetLeds() {
   for (i = 0; i < LEDS_SIZE; i++) {
     leds[i] = BLUE;
   }
-  for (i = 0; i < LEDS_SIGNALS_SIZE; i++) {
+  /*for (i = 0; i < LEDS_SIGNALS_SIZE; i++) {
     ledSignals[i] = LOW;
-  }
+  }*/
 }
 
 void convertPercent2Colors() {
@@ -107,7 +119,7 @@ void mapLeds() {
   }
 }
 
-void showStatus() {
+/*void showStatus() {
   //Serial.print(" LEDS: ");
   delay(100);
   for (int i = 0; i < LEDS_SIGNALS_SIZE; i++) {
@@ -118,13 +130,46 @@ void showStatus() {
   for (int i = 0; i < LEDS_SIGNALS_SIZE; i++) {
     digitalWrite(ledPins[i], LOW);
   }
+}*/
+
+void showStatus() {
+  uint32_t red = strip.Color(255, 0, 0);
+  uint32_t blue = strip.Color(0, 0, 255);
+  uint16_t i;
+  for(i=0; i < strip.numPixels(); i++) {
+    if (leds[i] == BLUE) {
+      strip.setPixelColor(i, blue);
+    } else {
+      strip.setPixelColor(i, red);
+    }
+  }
+  strip.show();
+  delay(800);
+  turnOff();
+}
+
+void turnOff() {
+  uint32_t off = strip.Color(0, 0, 0);
+  for(uint16_t i=0; i < strip.numPixels(); i++) {
+    strip.setPixelColor(i, off);
+  }
+  strip.show();
+}
+
+void colorWipe(uint8_t wait) {
+  uint32_t c = strip.Color(255, 0, 0);
+  for(uint16_t i=0; i<strip.numPixels(); i++) {
+    strip.setPixelColor(i, c);
+    strip.show();
+    //delay(wait);
+  }
 }
 
 void loop() {
   lidState = digitalRead(triggerPin);
   statusState = digitalRead(statusPin);
-  incState = analogRead(incPin);
-  decState = analogRead(decPin);
+  incState = digitalRead(incPin);
+  decState = digitalRead(decPin);
   //Serial.print("Analog inc: ");
   //Serial.print(incState);
   
@@ -137,18 +182,20 @@ void loop() {
     //lastCigarTime = millis();
   }
   else if (statusState == LOW && prevStatusState == HIGH) {
-    mapLeds();
+    //mapLeds();
     showStatus();
+    Serial.print("\nSTATUS");
+    //colorWipe(50);
   }
   //Serial.print("\nincState = ");
   //Serial.print(incState);
-  else if (incState == LOW && prevIncState > HIGH) {
+  else if (incState == LOW && prevIncState == HIGH) {
     limit = limit + 1;
     convertPercent2Colors();
     Serial.print("\nIncremented limit\nNew limit: ");
     Serial.print(limit);
   }
-  else if (decState == LOW && prevDecState > HIGH) {
+  else if (decState == LOW && prevDecState == HIGH) {
     if (limit > 1) {
       limit = limit - 1;
       convertPercent2Colors();
