@@ -35,6 +35,7 @@ public class SearchBluetooth extends AppCompatActivity {
 
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         enableBluetooth();
+
         //showPairedDevices();
         showAvailableDevices();
     }
@@ -46,6 +47,7 @@ public class SearchBluetooth extends AppCompatActivity {
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
                 // Create a new device item
                 discoveredDevices.add(device.getName() + " : " + device.getAddress());
+                Log.d("Discovered Devices: ", discoveredDevices.toString());
                 //DeviceItem newDevice = new DeviceItem(device.getName(), device.getAddress(), "false");
                 // Add it to our adapter
                 //bluetoothAdapter.add(newDevice);
@@ -56,6 +58,9 @@ public class SearchBluetooth extends AppCompatActivity {
     private void showAvailableDevices() {
         start();
         devicesView.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, discoveredDevices));
+        Log.d("SLEEP", "0000000000000000000000000000000000000000");
+        try{Thread.sleep(5000);} catch (InterruptedException ie) {ie.printStackTrace();}
+        Log.d("SLEEP", discoveredDevices.toString());
         cancel();
     }
 
@@ -98,7 +103,6 @@ public class SearchBluetooth extends AppCompatActivity {
             startActivityForResult(enableBT, REQUEST_BLUETOOTH);
         }
     }
-
 
     /**
      * This method is required for all devices running API23+
