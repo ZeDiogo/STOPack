@@ -17,17 +17,19 @@
         android:layout_marginBottom="2dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.0">
 
         <TextView
             android:id="@+id/textView"
-            android:layout_width="148dp"
+            android:layout_width="349dp"
             android:layout_height="39dp"
             android:layout_above="@+id/devices"
             android:layout_alignStart="@+id/devices"
             android:layout_alignParentTop="true"
-            android:layout_marginStart="17dp"
+            android:layout_marginStart="12dp"
             android:layout_marginTop="20dp"
             android:layout_marginBottom="9dp"
             android:autoText="false"

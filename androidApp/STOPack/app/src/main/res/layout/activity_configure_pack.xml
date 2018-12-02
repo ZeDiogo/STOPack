@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".ConfigurePack"
+    tools:layout_editor_absoluteY="81dp">
+
+    <Button
+        android:id="@+id/minus"
+        android:layout_width="55dp"
+        android:layout_height="59dp"
+        android:layout_marginStart="50dp"
+        android:layout_marginLeft="50dp"
+        android:layout_marginTop="60dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginRight="8dp"
+        android:onClick="decrement"
+        android:text="-"
+        android:textSize="25sp"
+        app:layout_constraintEnd_toStartOf="@+id/int_limit"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/limit_text" />
+
+    <TextView
+        android:id="@+id/limit_text"
+        android:layout_width="303dp"
+        android:layout_height="59dp"
+        android:layout_marginStart="53dp"
+        android:layout_marginLeft="53dp"
+        android:layout_marginTop="96dp"
+        android:layout_marginEnd="53dp"
+        android:layout_marginRight="53dp"
+        android:gravity="center_vertical|center_horizontal"
+        android:text="Limite Diário"
+        android:textSize="48sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/int_limit"
+        android:layout_width="0dp"
+        android:layout_height="60dp"
+        android:layout_marginTop="60dp"
+        android:layout_marginEnd="111dp"
+        android:layout_marginRight="111dp"
+        android:gravity="center_vertical|center_horizontal"
+        android:text="TextView"
+        android:textSize="35sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/minus"
+        app:layout_constraintTop_toBottomOf="@+id/limit_text" />
+
+    <Button
+        android:id="@+id/plus"
+        android:layout_width="54dp"
+        android:layout_height="59dp"
+        android:layout_marginStart="4dp"
+        android:layout_marginLeft="4dp"
+        android:layout_marginTop="60dp"
+        android:onClick="increment"
+        android:text="+"
+        android:textSize="25sp"
+        app:layout_constraintStart_toEndOf="@+id/int_limit"
+        app:layout_constraintTop_toBottomOf="@+id/limit_text" />
+
+    <Button
+        android:id="@+id/confirm"
+        android:layout_width="278dp"
+        android:layout_height="75dp"
+        android:layout_marginStart="48dp"
+        android:layout_marginLeft="48dp"
+        android:layout_marginTop="108dp"
+        android:onClick="sendLimitToPack"
+        android:text="CONFIRMAR"
+        android:textSize="25sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/int_limit" />
+
+    <TextView
+        android:id="@+id/description"
+        android:layout_width="320dp"
+        android:layout_height="26dp"
+        android:layout_marginStart="32dp"
+        android:layout_marginLeft="32dp"
+        android:layout_marginTop="16dp"
+        android:text="Escolha o seu limite de cigarros diário"
+        android:textSize="18sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/int_limit" />
+
+</android.support.constraint.ConstraintLayout>

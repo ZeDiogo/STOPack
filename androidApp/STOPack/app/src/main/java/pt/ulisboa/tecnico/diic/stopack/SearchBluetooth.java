@@ -36,8 +36,8 @@ public class SearchBluetooth extends AppCompatActivity {
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         enableBluetooth();
 
-        //showPairedDevices();
-        showAvailableDevices();
+        showPairedDevices();
+        //showAvailableDevices();
     }
 
     private final BroadcastReceiver bReciever = new BroadcastReceiver() {

@@ -24,4 +24,9 @@ public class Display extends AppCompatActivity {
         startActivity(intent);
     }
 
+    public void goToLimitScreen(View view) {
+        Intent intent = new Intent(this, ConfigurePack.class);
+        startActivity(intent);
+    }
+
 }
