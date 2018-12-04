@@ -35,8 +35,6 @@ SoftwareSerial bluetooth(bluetoothTx, bluetoothRx);
 const int triggerPin = 5;     // the number of the pushbutton pin
 //const int ledPin =  13;      // the number of the LED pin
 const int statusPin = 4;
-const int incPin = 6;
-const int decPin = 7;
 const int infraredPin = 5;
 const int RED = 1;
 //const int GREEN = 2;
@@ -44,18 +42,16 @@ const int BLUE = 3;
 
 // variables will change:
 int lidState = LOW;
-int incState = LOW;
-int decState = LOW;
 int prevLidState = LOW;
 int prevStatusState = LOW;
-int prevIncState = LOW;
-int prevDecState = LOW;
 int statusState = LOW;
-int infraredValue = 0;
+
+int prevInfraredValue;
+int infraredValue;
 //int intervalCigarettes = 5;
 int smoked = 0;
 //unsigned long lastCigarTime = 0;
-int limit = 8;
+int limit = 10;
 char* buffer;
 boolean receiving = false;
 int pos;
@@ -77,8 +73,6 @@ void setup() {
   // initialize the pushbutton pin as an input:
   pinMode(triggerPin, INPUT);
   pinMode(statusPin, INPUT);
-  pinMode(incPin, INPUT);
-  pinMode(decPin, INPUT);
   Serial.begin(9600);
   strip.begin();
   strip.show();
@@ -96,6 +90,10 @@ void setup() {
   bluetooth.begin(9600);  // Start bluetooth serial at 9600
   buffer = new char[MAX_BUFFER];
   resetData();
+
+  //Calibracao
+  infraredValue = analogRead(infraredPin);
+  prevInfraredValue = infraredValue;
 }
 
 void resetLeds() {
@@ -103,9 +101,6 @@ void resetLeds() {
   for (i = 0; i < LEDS_SIZE; i++) {
     leds[i] = BLUE;
   }
-  /*for (i = 0; i < LEDS_SIGNALS_SIZE; i++) {
-    ledSignals[i] = LOW;
-  }*/
 }
 
 void convertPercent2Colors() {
@@ -127,36 +122,8 @@ void convertPercent2Colors() {
   }
 }
 
-void mapLeds() {
-  int i;
-  //Serial.print(" LEDS: ");
-  for (i = 0; i < LEDS_SIZE; i++) {
-    if (leds[i] == BLUE) {
-      //Serial.print("B"); 
-      ledSignals[i*2] = HIGH;
-      ledSignals[i*2+1] = LOW;
-    } else {
-      //Serial.print("R");
-      ledSignals[i*2] = LOW;
-      ledSignals[i*2+1] = HIGH;
-    }
-  }
-}
-
-/*void showStatus() {
-  //Serial.print(" LEDS: ");
-  delay(100);
-  for (int i = 0; i < LEDS_SIGNALS_SIZE; i++) {
-    //Serial.print(ledSignals[i]);
-    digitalWrite(ledPins[i], ledSignals[i]);
-  }
-  delay(2000);
-  for (int i = 0; i < LEDS_SIGNALS_SIZE; i++) {
-    digitalWrite(ledPins[i], LOW);
-  }
-}*/
-
 void showStatus(int interval) {
+  convertPercent2Colors();
   uint32_t red = strip.Color(255, 0, 0);
   uint32_t blue = strip.Color(0, 0, 255);
   uint16_t i;
@@ -198,56 +165,29 @@ void colorWipe(uint8_t wait) {
 }
 
 void loop() {
-  lidState = digitalRead(triggerPin);
+  //lidState = digitalRead(triggerPin);
   statusState = digitalRead(statusPin);
-  incState = digitalRead(incPin);
-  decState = digitalRead(decPin);
   infraredValue = analogRead(infraredPin);
-  //Serial.print("Analog inc: ");
-  //Serial.print(incState);
   
-  if (lidState == LOW && prevLidState == HIGH) {
+  if (prevInfraredValue - infraredValue < -5) smoked = smoked + 1;
+  Serial.println(smoked);
+  prevInfraredValue = infraredValue;
+
+  /*Disabled button*/
+  /*if (lidState == LOW && prevLidState == HIGH) {
     //increment number cigarettes;
     smoked = smoked + 1;
     convertPercent2Colors();
     //Serial.print("\nSmoked:");
     //Serial.print(smoked);
     //lastCigarTime = millis();
-  }
-  else if (statusState == LOW && prevStatusState == HIGH) {
-    //mapLeds();
-    showStatus(800);
-    //Serial.print("\nSTATUS");
-    //colorWipe(50);
-  }
-  //Serial.print("\nincState = ");
-  //Serial.print(incState);
-  else if (incState == LOW && prevIncState == HIGH) {
-    limit = limit + 1;
-    convertPercent2Colors();
-    //Serial.print("\nIncremented limit\nNew limit: ");
-    //Serial.print(limit);
-  }
-  else if (decState == LOW && prevDecState == HIGH) {
-    if (limit > 1) {
-      limit = limit - 1;
-      convertPercent2Colors();
-      //Serial.print("\nIncremented limit\nNew limit: ");
-      //Serial.print(limit);
-    } else {
-      //Serial.print("\nReached bottom limit 1");
-    }
-  }
+  }*/
+  
+  if (statusState == LOW && prevStatusState == HIGH) showStatus(800);
   
   prevLidState = lidState;
   prevStatusState = statusState;
-  prevIncState = incState;
-  prevDecState = decState;
-
-  //Infrared
-  //Serial.print("InfraRed value: ");
-  //Serial.println(infraredValue);
-
+  
   //BLUETOOTH
   if(bluetooth.available())  // If the bluetooth sent any characters
   {
