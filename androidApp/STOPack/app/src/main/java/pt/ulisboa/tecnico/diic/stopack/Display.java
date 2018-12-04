@@ -12,12 +12,14 @@ public class Display extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_display);
+        //setContentView(R.layout.activity_configure_pack);
+        Intent intent = new Intent(this, ConfigurePack.class);
+        startActivity(intent);
     }
 
     /** Called when the user taps the Send button */
-    public void sendMessage(View view) {
-        Intent intent = new Intent(this, SearchBluetooth.class);
+    /*public void sendMessage(View view) {
+        Intent intent = new Intent(this, ConfigurePack.class);
         //EditText editText = (EditText) findViewById(R.id.editText);
         //String message = editText.getText().toString();
         //intent.putExtra(EXTRA_MESSAGE, message);
@@ -27,6 +29,6 @@ public class Display extends AppCompatActivity {
     public void goToLimitScreen(View view) {
         Intent intent = new Intent(this, ConfigurePack.class);
         startActivity(intent);
-    }
+    }*/
 
 }

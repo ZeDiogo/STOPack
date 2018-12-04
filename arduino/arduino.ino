@@ -1,9 +1,11 @@
 #include <Adafruit_NeoPixel.h>
+#include <SoftwareSerial.h>  
 #ifdef __AVR__
   #include <avr/power.h>
 #endif
 
 #define PIN 8
+#define MAX_BUFFER 4
 /*
    The circuit:
   - LED attached from pin 13 to ground
@@ -25,12 +27,17 @@
 
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(8, PIN, NEO_GRB + NEO_KHZ800);
 
+int bluetoothTx = 2;  // TX-O pin of bluetooth mate, Arduino D2
+int bluetoothRx = 3;  // RX-I pin of bluetooth mate, Arduino D3
+SoftwareSerial bluetooth(bluetoothTx, bluetoothRx);
+
 // constants won't change. They're used here to set pin numbers:
 const int triggerPin = 5;     // the number of the pushbutton pin
 //const int ledPin =  13;      // the number of the LED pin
 const int statusPin = 4;
-const int incPin = 6; //analog
-const int decPin = 7; //analog
+const int incPin = 6;
+const int decPin = 7;
+const int infraredPin = 5;
 const int RED = 1;
 //const int GREEN = 2;
 const int BLUE = 3;
@@ -44,10 +51,14 @@ int prevStatusState = LOW;
 int prevIncState = LOW;
 int prevDecState = LOW;
 int statusState = LOW;
+int infraredValue = 0;
 //int intervalCigarettes = 5;
 int smoked = 0;
 //unsigned long lastCigarTime = 0;
 int limit = 8;
+char* buffer;
+boolean receiving = false;
+int pos;
 
 
 int ledPins[] = {13, 12, 11, 10, 9, 8, 7, 6, 5, 4};
@@ -71,7 +82,20 @@ void setup() {
   Serial.begin(9600);
   strip.begin();
   strip.show();
-  strip.setBrightness(50);
+  strip.setBrightness(5);
+  
+  //BLUETOOTH
+  //Serial.begin(9600);  // Begin the serial monitor at 9600bps
+  bluetooth.begin(115200);  // The Bluetooth Mate defaults to 115200bps
+  bluetooth.print("$");  // Print three times individually
+  bluetooth.print("$");
+  bluetooth.print("$");  // Enter command mode
+  delay(100);  // Short delay, wait for the Mate to send back CMD
+  bluetooth.println("U,9600,N");  // Temporarily Change the baudrate to 9600, no parity
+  // 115200 can be too fast at times for NewSoftSerial to relay the data reliably
+  bluetooth.begin(9600);  // Start bluetooth serial at 9600
+  buffer = new char[MAX_BUFFER];
+  resetData();
 }
 
 void resetLeds() {
@@ -132,7 +156,7 @@ void mapLeds() {
   }
 }*/
 
-void showStatus() {
+void showStatus(int interval) {
   uint32_t red = strip.Color(255, 0, 0);
   uint32_t blue = strip.Color(0, 0, 255);
   uint16_t i;
@@ -144,7 +168,7 @@ void showStatus() {
     }
   }
   strip.show();
-  delay(800);
+  delay(interval);
   turnOff();
 }
 
@@ -154,6 +178,14 @@ void turnOff() {
     strip.setPixelColor(i, off);
   }
   strip.show();
+}
+
+
+void blink() {
+  for(int i = 0; i < 2; i++) {
+    showStatus(300);
+    delay(200);
+  } 
 }
 
 void colorWipe(uint8_t wait) {
@@ -170,6 +202,7 @@ void loop() {
   statusState = digitalRead(statusPin);
   incState = digitalRead(incPin);
   decState = digitalRead(decPin);
+  infraredValue = analogRead(infraredPin);
   //Serial.print("Analog inc: ");
   //Serial.print(incState);
   
@@ -177,14 +210,14 @@ void loop() {
     //increment number cigarettes;
     smoked = smoked + 1;
     convertPercent2Colors();
-    Serial.print("\nSmoked:");
-    Serial.print(smoked);
+    //Serial.print("\nSmoked:");
+    //Serial.print(smoked);
     //lastCigarTime = millis();
   }
   else if (statusState == LOW && prevStatusState == HIGH) {
     //mapLeds();
-    showStatus();
-    Serial.print("\nSTATUS");
+    showStatus(800);
+    //Serial.print("\nSTATUS");
     //colorWipe(50);
   }
   //Serial.print("\nincState = ");
@@ -192,17 +225,17 @@ void loop() {
   else if (incState == LOW && prevIncState == HIGH) {
     limit = limit + 1;
     convertPercent2Colors();
-    Serial.print("\nIncremented limit\nNew limit: ");
-    Serial.print(limit);
+    //Serial.print("\nIncremented limit\nNew limit: ");
+    //Serial.print(limit);
   }
   else if (decState == LOW && prevDecState == HIGH) {
     if (limit > 1) {
       limit = limit - 1;
       convertPercent2Colors();
-      Serial.print("\nIncremented limit\nNew limit: ");
-      Serial.print(limit);
+      //Serial.print("\nIncremented limit\nNew limit: ");
+      //Serial.print(limit);
     } else {
-      Serial.print("\nReached bottom limit 1");
+      //Serial.print("\nReached bottom limit 1");
     }
   }
   
@@ -210,4 +243,46 @@ void loop() {
   prevStatusState = statusState;
   prevIncState = incState;
   prevDecState = decState;
+
+  //Infrared
+  //Serial.print("InfraRed value: ");
+  //Serial.println(infraredValue);
+
+  //BLUETOOTH
+  if(bluetooth.available())  // If the bluetooth sent any characters
+  {
+    // Send any characters the bluetooth prints to the serial monitor
+    char data = (char)bluetooth.read();
+    //Serial.println(data);
+    switch(data) {
+            //3: End of transmission
+            case 3:  receiving = false;
+                    limit = buffer2int(buffer);
+                    Serial.println(limit);
+                    convertPercent2Colors();
+                    blink();
+                      break; //end message
+            default: if (receiving == false) resetData();
+                    buffer[pos] = data;
+                    pos++;
+                    receiving = true;       
+          }
+  }
+  if(Serial.available())  // If stuff was typed in the serial monitor
+  {
+    // Send any characters the Serial monitor prints to the bluetooth
+    bluetooth.print((char)Serial.read());
+  }
+  // and loop forever and ever!
+}
+
+void resetData(){
+   for (int i=0; i<=pos; i++) buffer[i] = 0; 
+   pos = 0;
+}
+    
+int buffer2int(char* buffer){
+  int i;
+  sscanf(buffer, "%d", &i);
+  return i;
 }

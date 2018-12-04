@@ -9,10 +9,14 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Message;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
@@ -23,8 +27,10 @@ public class SearchBluetooth extends AppCompatActivity {
     private static final String TAG = "SearchBluetooth";
     private static final int REQUEST_BLUETOOTH = 1;
     private ListView devicesView;
+
     private BluetoothAdapter bluetoothAdapter;
     private ArrayList discoveredDevices = new ArrayList<String>();
+    private Bluetooth bt;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,9 +42,53 @@ public class SearchBluetooth extends AppCompatActivity {
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         enableBluetooth();
 
-        showPairedDevices();
+        bt = new Bluetooth(this, mHandler);
+        connectService();
+
+        //showPairedDevices();
         //showAvailableDevices();
     }
+
+    public void connectService(){
+        try {
+            BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+            if (bluetoothAdapter.isEnabled()) {
+                bt.start();
+                bt.connectDevice("RNBT-89CC");
+                Log.d(TAG, "Btservice started - listening");
+
+            } else {
+                Log.w(TAG, "Btservice started - bluetooth is not enabled");
+
+            }
+        } catch(Exception e){
+            Log.e(TAG, "Unable to start bt ",e);
+
+        }
+    }
+
+    private final Handler mHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case Bluetooth.MESSAGE_STATE_CHANGE:
+                    Log.d(TAG, "MESSAGE_STATE_CHANGE: " + msg.arg1);
+                    break;
+                case Bluetooth.MESSAGE_WRITE:
+                    Log.d(TAG, "MESSAGE_WRITE ");
+                    break;
+                case Bluetooth.MESSAGE_READ:
+                    Log.d(TAG, "MESSAGE_READ ");
+                    break;
+                case Bluetooth.MESSAGE_DEVICE_NAME:
+                    Log.d(TAG, "MESSAGE_DEVICE_NAME "+msg);
+                    break;
+                case Bluetooth.MESSAGE_TOAST:
+                    Log.d(TAG, "MESSAGE_TOAST "+msg);
+                    break;
+            }
+        }
+    };
 
     private final BroadcastReceiver bReciever = new BroadcastReceiver() {
         public void onReceive(Context context, Intent intent) {
@@ -103,6 +153,26 @@ public class SearchBluetooth extends AppCompatActivity {
             startActivityForResult(enableBT, REQUEST_BLUETOOTH);
         }
     }
+
+    //ListView lv = getListView();
+
+    // listening to single list item on click
+
+    /*devicesView.setOnItemClickListener(new OnItemClickListener() {
+        public void onItemClick(AdapterView<?> parent, View view,
+        int position, long id) {
+
+            // selected item
+            //HERE YOU GOT POSITION FOR PERTICULAR ITEM
+
+            // Launching new Activity on selecting single List Item
+            Intent i = new Intent(getApplicationContext(), SingleListItem.class);
+            // sending data to new activity
+            i.putExtra("position", fillMaps.get(position));
+            startActivity(i);
+
+        }
+    });*/
 
     /**
      * This method is required for all devices running API23+
