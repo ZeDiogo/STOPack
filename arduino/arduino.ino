@@ -36,6 +36,7 @@ const int triggerPin = 5;     // the number of the pushbutton pin
 //const int ledPin =  13;      // the number of the LED pin
 const int statusPin = 4;
 const int infraredPin = 5;
+const int emitterPin = 4;
 const int RED = 1;
 //const int GREEN = 2;
 const int BLUE = 3;
@@ -48,7 +49,9 @@ int statusState = LOW;
 
 int prevInfraredValue;
 int infraredValue;
-//int intervalCigarettes = 5;
+int emitterValue;
+
+unsigned long initTime = millis();
 int smoked = 0;
 //unsigned long lastCigarTime = 0;
 int limit = 10;
@@ -168,9 +171,22 @@ void loop() {
   //lidState = digitalRead(triggerPin);
   statusState = digitalRead(statusPin);
   infraredValue = analogRead(infraredPin);
+  emitterValue = analogRead(emitterPin);
   
-  if (prevInfraredValue - infraredValue < -5) smoked = smoked + 1;
-  Serial.println(smoked);
+
+  //if (prevInfraredValue - infraredValue > 5) initTime = millis();
+  // && (millis() - initTime > 800) && (millis() - initTime < 3000)
+  if (prevInfraredValue - infraredValue < -7) {
+    smoked = smoked + 1;
+    Serial.println("REEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE");
+  }
+  Serial.print("emitter: ");
+  Serial.print(emitterValue);
+  Serial.print(" | receiver: ");
+  Serial.println(infraredValue);
+  
+  //if(prevInfraredValue - infraredValue < -7) {Serial.println("REEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE");}
+  //delay(500);
   prevInfraredValue = infraredValue;
 
   /*Disabled button*/
@@ -208,11 +224,11 @@ void loop() {
                     receiving = true;       
           }
   }
-  if(Serial.available())  // If stuff was typed in the serial monitor
+  /*if(Serial.available())  // If stuff was typed in the serial monitor
   {
     // Send any characters the Serial monitor prints to the bluetooth
     bluetooth.print((char)Serial.read());
-  }
+  }*/
   // and loop forever and ever!
 }
 
