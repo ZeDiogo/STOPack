@@ -49,6 +49,7 @@ int statusState = LOW;
 
 int prevInfraredValue;
 int infraredValue;
+int prevEmitterValue = 50;
 int emitterValue;
 
 unsigned long initTime = millis();
@@ -172,13 +173,18 @@ void loop() {
   statusState = digitalRead(statusPin);
   infraredValue = analogRead(infraredPin);
   emitterValue = analogRead(emitterPin);
-  
 
   //if (prevInfraredValue - infraredValue > 5) initTime = millis();
   // && (millis() - initTime > 800) && (millis() - initTime < 3000)
-  if (prevInfraredValue - infraredValue < -7) {
-    smoked = smoked + 1;
-    Serial.println("REEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE");
+  if (prevInfraredValue - infraredValue < -7 && prevEmitterValue - emitterValue > -7){
+    Serial.println("-------------------");
+    Serial.println(millis());
+    Serial.println(initTime);
+    if(millis() - initTime > 1000 && millis() - initTime < 150000) {
+      smoked = smoked + 1;
+      Serial.println("REEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE");
+      initTime = millis();
+    }
   }
   Serial.print("emitter: ");
   Serial.print(emitterValue);
@@ -188,6 +194,7 @@ void loop() {
   //if(prevInfraredValue - infraredValue < -7) {Serial.println("REEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE");}
   //delay(500);
   prevInfraredValue = infraredValue;
+  prevEmitterValue = emitterValue;
 
   /*Disabled button*/
   /*if (lidState == LOW && prevLidState == HIGH) {
