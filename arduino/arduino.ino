@@ -68,11 +68,72 @@ int LEDS_SIZE = 8;
 int LEDS_SIGNALS_SIZE = 10;
 int PERCENTAGE_DIVISION = 100 / LEDS_SIZE;
 
+class Queue {
+  private:
+    int *values;
+    int len;
+  public:
+    Queue(int len);
+    void init(int v);
+    void push(int v);
+    void printValues();
+    int meanOldest();
+    int getVariations();
+};
+
+Queue::Queue(int len) {
+  this->len = len;
+  values = new int[len]; 
+}
+
+void Queue::init(int v) {
+  for (int i = 0; i < len; i++) {
+    values[i] = v;
+  }
+}
+
+void Queue::push(int v) {
+  for (int i = 1; i < len; i++) {
+    values[i-1] = values[i];
+  }
+  values[len-1] = v;
+}
+
+void Queue::printValues() {
+  Serial.print(values[0]);
+  for (int i = 1; i < len; i++) {
+    Serial.print(" -> ");
+    Serial.print(values[i]);
+  }
+  Serial.println("");
+}
+
+int Queue::meanOldest() {
+  int sum = 0;
+  for (int i = 0; i < (len-1); i++) {
+    sum = sum + values[i];
+  }
+  int mean = sum / (len-1);
+  return mean;
+}
+
+int Queue::getVariations() {
+  int sum = 0;
+  int diff = 0;
+  for (int i = 1; i < (len-1); i++) {
+    diff = (values[i-1] - values[i]);
+    if (diff < 0) diff = -diff;
+    sum = sum + diff;
+  }
+  return sum;
+}
+Queue *q;
+
 void setup() {
   // initialize the LED pin as an output:
   int i;
   for (i = 0; i < LEDS_SIGNALS_SIZE; i++) {
-    pinMode(ledPins[i], OUTPUT); 
+    pinMode(ledPins[i], OUTPUT);
   }
   // initialize the pushbutton pin as an input:
   pinMode(triggerPin, INPUT);
@@ -98,6 +159,9 @@ void setup() {
   //Calibracao
   infraredValue = analogRead(infraredPin);
   prevInfraredValue = infraredValue;
+
+  q = new Queue(5);
+  q->init(infraredValue); //use for calibration
 }
 
 void resetLeds() {
@@ -174,15 +238,31 @@ void loop() {
   infraredValue = analogRead(infraredPin);
   emitterValue = analogRead(emitterPin);
 
-  //if (prevInfraredValue - infraredValue > 5) initTime = millis();
-  // && (millis() - initTime > 800) && (millis() - initTime < 3000)
-  if (prevInfraredValue - infraredValue < -7 && prevEmitterValue - emitterValue > -7){
+  //DEBUG
+  q->push(infraredValue);
+  
+ 
+  //if (prevInfraredValue - infraredValue < -7 && prevEmitterValue - emitterValue > -7){ 
+  if (prevInfraredValue - infraredValue < -7 && prevEmitterValue - emitterValue > -7 && q->getVariations() < 10){
     Serial.println("-------------------");
     Serial.println(millis());
     Serial.println(initTime);
-    if(millis() - initTime > 1000 && millis() - initTime < 150000) {
+    if(millis() - initTime > 1000 && millis() - initTime < 600000) {
       smoked = smoked + 1;
       Serial.println("REEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE");
+      q->printValues();
+      Serial.print("variations: ");
+      Serial.println(q->getVariations());
+      Serial.print("prevInfraredValue: ");
+      Serial.println(prevInfraredValue);
+      Serial.print("infraredValue: ");
+      Serial.println(infraredValue);
+      Serial.print("prevEmitterValue: ");
+      Serial.println(prevEmitterValue);
+      Serial.print("emitterValue: ");
+      Serial.println(emitterValue);
+      convertPercent2Colors();
+      blink();
       initTime = millis();
     }
   }
@@ -190,6 +270,8 @@ void loop() {
   Serial.print(emitterValue);
   Serial.print(" | receiver: ");
   Serial.println(infraredValue);
+  Serial.print("variations: ");
+  Serial.println(q->getVariations());
   
   //if(prevInfraredValue - infraredValue < -7) {Serial.println("REEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE");}
   //delay(500);
@@ -216,11 +298,13 @@ void loop() {
   {
     // Send any characters the bluetooth prints to the serial monitor
     char data = (char)bluetooth.read();
+    //Serial.print("Data: ");
     //Serial.println(data);
     switch(data) {
             //3: End of transmission
             case 3:  receiving = false;
                     limit = buffer2int(buffer);
+                    Serial.print("Limit: ");
                     Serial.println(limit);
                     convertPercent2Colors();
                     blink();
