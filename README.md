@@ -1,3 +1,3 @@
 # STOPack
 
-![STOPack](http://url/to/hardware.jpg)
+![STOPack Image](hardware.jpg)
